@@ -8,6 +8,20 @@ Build targets are configured through a package configuration (*.tars*) file. Eac
 
 For example, a built-in tars plugin is `fs` (filesystem), providing access to file operations. One of the transforms provided by the `fs` plugin is `copy`, which, as the name suggests, copies a file from a source to a destination.
 
+```json
+{
+    "package": "tars-test",
+    "targets": [
+        {
+            "name": "hello-copy",
+            "transform": "fs:copy",
+            "src": "src/hello.txt",
+            "dest": "dst/"
+        }
+    ]
+}
+```
+
 Tars loads this configuration file and executes the transforms on each target in order, to produce the final output.
 
 Because of its plugin-based architecure, tars can be configured to work with pretty much anything.
