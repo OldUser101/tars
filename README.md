@@ -54,7 +54,7 @@ Here is an example (`fs:copy`):
 import os, shutil
 
 def fs_copy(cfg):
-	if not "src" in cfg or not "dest" in cfg:
+    if not "src" in cfg or not "dest" in cfg:
         return 1
 
     src = cfg["src"]
@@ -63,10 +63,10 @@ def fs_copy(cfg):
     os.makedirs(os.path.dirname(dest), exist_ok=True)
     shutil.copy2(src, dest)
 
-	return 0
+    return 0
 
 def register(ctx):
-	ctx.register_transform("copy", fs_copy)
+    ctx.register_transform("copy", fs_copy)
 ```
 
 As you can probably see, `register` just calls `register_transform` with the transform name (`copy`), and the function to call (`fs_copy`). 
