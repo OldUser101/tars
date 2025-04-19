@@ -266,6 +266,8 @@ class Tars:
     Initialize, parse, and run a tars configuration
     """
     def __init__(self):
+        colorama.init() # Initialize colorama for colored output on Windows 
+
         args = TarsConfiguration.parse_args(self)
 
         self.config = args.config

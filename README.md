@@ -4,6 +4,8 @@ Tars (stylized "tars") is a modular build system written in Python.
 
 ## How it works
 
+At its core, tars is incredibly simple, it parses a configuration file, and dispatches targets to relevant transform plugins. It is a single, ~300 line Python file at the time of writing.
+
 Build targets are configured through a package configuration (*.tars*) file. Each target specifies a transform which is linked with an external plugin to perform it.
 
 For example, a built-in tars plugin is `fs` (filesystem), providing access to file operations. One of the transforms provided by the `fs` plugin is `copy`, which, as the name suggests, copies a file from a source to a destination.
