@@ -36,6 +36,16 @@ Prerequisites:
  - Python 3 and default modules (most versions should work, but tested on Python 3.13)
  - Python `colorama` package (`pip install colorama` or similar)
 
+### Method 1: Script
+
+Run this to download the install script and run it:
+
+`wget -O ~/tars-install.sh https://raw.githubusercontent.com/OldUser101/tars/refs/heads/main/install.sh && chmod +x ~/tars-install.sh && ~/tars-install.sh && rm ~/tars-install.sh`
+
+This will install tars for the current user.
+
+### Method 2: Manual
+
 Simply clone this repository with:
 
 `git clone https://github.com/OldUser101/tars.git`

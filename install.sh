@@ -5,7 +5,7 @@
 cd ~
 git clone https://github.com/OldUser101/tars.git
 mkdir -p ~/.tars/plugins
-cp ~/tars/tars.py ~/.tars/
+cp ~/tars/* ~/.tars/
 ln -s ~/.tars/tars.py ~/.tars/tars
 echo 'export PATH="$PATH:$HOME/.tars"' >> ~/.bashrc
 source ~/.bashrc
