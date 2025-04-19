@@ -40,6 +40,8 @@ An example configuration looks like the following:
 
 This will run the `fs:copy` transform (see below), copying `src/hello.txt` to the `dst` directory.
 
+Targets can contain many values, this is defined by the transform being applied. The only two required values are `name` and `transform` which are used by tars. `type` is also reserved for use by tars.
+
 Hopefully you can see how easy tars is to use.
 
 ## Plugins
@@ -86,7 +88,30 @@ Because the configuration is editable directly by the user, it is best to check 
 
 We then make the directories and copy the file as required.
 
-The last, and probably most important, line in the transform function is `return 0`. This signals tars that the transform ran successfully. If you don't return anything, or return a number that is not 0, tars will halt the entire build process, assuming something went wrong. Please return something.
+The last, and probably most important, line in the transform function is `return 0`. This signals tars that the transform ran successfully. If you don't return anything, or return a number that is not 0, tars will halt the entire build process, assuming something went wrong. **Please return something.**
+
+It's worth noting that transforms can take any configuration they wish, as long as it's valis JSON, you can use it.
+
+For example, you could have:
+
+```json
+{
+    "name": "compile-hello",
+    "transform": "c:compile",
+    "src": [ "src/hello.c" ],
+    "options": {
+        "debug": true
+    },
+    "artifact": {
+        "path": "bin/hello",
+        "type": "binary"
+    }
+}
+```
+
+For the (currently fictional) plugin `c`, the `compile` transform could take various configuration options, such as multiple sources, options, and build artifacts. The only two required values are `name` and `transform`, as these are used by tars itself.
+
+The target configuration value `type` is reserved for future use by tars, and plugins should not put their own things there.
 
 ## The name
 
