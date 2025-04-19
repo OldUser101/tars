@@ -12,6 +12,28 @@ Tars loads this configuration file and executes the transforms on each target in
 
 Because of its plugin-based architecure, tars can be configured to work with pretty much anything.
 
+## Installing
+
+Installing tars on your system is very simple.
+
+Prerequisites:
+ - Python 3 and default modules (most versions should work, but tested on Python 3.13)
+ - Python `colorama` package (`pip install colorama` or similar)
+
+Simply clone this repository with:
+
+`git clone https://github.com/OldUser101/tars.git`
+
+to any suitable location of your choice.
+
+Then symlink `tars` to `tars.py` with:
+
+`ln -s /usr/bin/tars /path/to/where/you/cloned/tars.py`
+
+You don't have to put this symlink in `/usr/bin`, though, if you do, you should probably copy `tars.py` to a location accessible by all users if you're on a multi-user system.
+
+From there, just type `tars` to run it.
+
 ## Usage
 
 Currently, tars is quite basic, and just executes plugins, but more is always being worked on. 
