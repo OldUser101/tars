@@ -74,7 +74,7 @@ An example configuration looks like the following:
 }
 ```
 
-This will run the `fs:copy` transform (see below), copying `src/hello.txt` to the `dst` directory.
+This will run the `fs:copy` transform, copying `src/hello.txt` to the `dst` directory.
 
 Targets can contain many values, this is defined by the transform being applied. The only two required values are `name` and `transform` which are used by tars. `type` is also reserved for use by tars.
 
