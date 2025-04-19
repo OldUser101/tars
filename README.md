@@ -64,6 +64,8 @@ This will run the `fs:copy` transform (see below), copying `src/hello.txt` to th
 
 Targets can contain many values, this is defined by the transform being applied. The only two required values are `name` and `transform` which are used by tars. `type` is also reserved for use by tars.
 
+Transforms are typically specified in the format `plugin:transform`, so `fs:copy` would be the `copy` transform in the `fs` plugin.
+
 Hopefully you can see how easy tars is to use.
 
 ## Plugins
@@ -93,7 +95,9 @@ def register(ctx):
     ctx.register_transform("copy", fs_copy)
 ```
 
-As you can probably see, `register` just calls `register_transform` with the transform name (`copy`), and the function to call (`fs_copy`). 
+As you can probably see, `register` just calls `register_transform` with the transform name (`copy`), and the function to call (`fs_copy`).
+
+It's worth noting that the transform names passed to `register_transform` should be the local name (e.g. `copy`, not `fs:copy`), as the plugin name is added by tars at runtime based on the name of the main plugin file. In this case, the file is `fs.py`, the transform is `copy`, so the full name would be `fs:copy`.
 
 Transform functions take a single argument (`cfg` in this case), that is the configuration dictionary taken straight from the package configuration file. For example:
 
@@ -134,6 +138,8 @@ For example, you could have:
 For the (currently fictional) plugin `c`, the `compile` transform could take various configuration options, such as multiple sources, options, and build artifacts. The only two required values are `name` and `transform`, as these are used by tars itself.
 
 The target configuration value `type` is reserved for future use by tars, and plugins should not put their own things there.
+
+Plugins are not limited to just the capabilities of Python either. With appropriate APIs, the Python plugin can be used as a wrapper to run other things on the system. For example, if you had written a plugin in Rust, you could run the binary with generated parameters. You could even load a shared library (or dynamic-linked library on Windows), and call functions from it. This allows tars to be extensible, and is the very reason it is so powerful.
 
 ## The name
 
