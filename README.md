@@ -50,6 +50,8 @@ You don't have to put this symlink in `/usr/bin`, though, if you do, you should 
 
 From there, just type `tars` to run it.
 
+I'm currently working on tars standard plugins [over here](https://github.com/OldUser101/tars-plugins).
+
 ## Usage
 
 Currently, tars is quite basic, and just executes plugins, but more is always being worked on. 
