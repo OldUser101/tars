@@ -112,7 +112,7 @@ We then make the directories and copy the file as required.
 
 The last, and probably most important, line in the transform function is `return 0`. This signals tars that the transform ran successfully. If you don't return anything, or return a number that is not 0, tars will halt the entire build process, assuming something went wrong. **Please return something.**
 
-It's worth noting that transforms can take any configuration they wish, as long as it's valis JSON, you can use it.
+It's worth noting that transforms can take any configuration they wish, as long as it's valid JSON, you can use it.
 
 For example, you could have:
 
