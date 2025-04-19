@@ -22,6 +22,72 @@ Currently, tars is quite basic, and just executes plugins, but more is always be
  - `-v`, `--verbose`: enable verbose output
  - `-h`, `--help`: shows this information
 
+An example configuration looks like the following:
+
+```json
+{
+    "package": "tars-test",
+    "targets": [
+        {
+            "name": "hello-copy",
+            "transform": "fs:copy",
+            "src": "src/hello.txt",
+            "dest": "dst/"
+        }
+    ]
+}
+```
+
+This will run the `fs:copy` transform (see below), copying `src/hello.txt` to the `dst` directory.
+
+Hopefully you can see how easy tars is to use.
+
+## Plugins
+
+I'm still working on actually creating these plugins (even `fs` is just limited to the `copy` transform, and not even public), but you can always write your own.
+
+All plugins should have a top-level function `register` that takes a `TarsPluginContext` object as an argument. In this function, plugins should register any transforms using the `register_transform` function.
+
+Here is an example (`fs:copy`):
+
+```py
+import os, shutil
+
+def fs_copy(cfg):
+	if not "src" in cfg or not "dest" in cfg:
+        return 1
+
+    src = cfg["src"]
+    dest = cfg["dest"]
+
+    os.makedirs(os.path.dirname(dest), exist_ok=True)
+    shutil.copy2(src, dest)
+
+	return 0
+
+def register(ctx):
+	ctx.register_transform("copy", fs_copy)
+```
+
+As you can probably see, `register` just calls `register_transform` with the transform name (`copy`), and the function to call (`fs_copy`). 
+
+Transform functions take a single argument (`cfg` in this case), that is the configuration dictionary taken straight from the package configuration file. For example:
+
+```json
+{
+    "name": "hello-copy",
+    "transform": "fs:copy",
+    "src": "src/hello.txt",
+    "dest": "dst/"
+}
+```
+
+Because the configuration is editable directly by the user, it is best to check if the `src` and `dest` keys actually exist in the configuration to avoid triggering exceptions.
+
+We then make the directories and copy the file as required.
+
+The last, and probably most important, line in the transform function is `return 0`. This signals tars that the transform ran successfully. If you don't return anything, or return a number that is not 0, tars will halt the entire build process, assuming something went wrong. Please return something.
+
 ## The name
 
 Okay, the acronym was an afterthought.
