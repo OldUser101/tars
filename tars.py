@@ -60,7 +60,7 @@ class TarsPackage:
     """
     def parse_from_file(self, tars):
         try:
-            config = TarsConfiguration.load_config(tars)
+            config = TarsConfiguration.load_pkg_config(tars)
 
             TarsUtils.check_has("package", config, tars.config_file)
             self.pkg_name = str(config["package"])
@@ -101,7 +101,7 @@ class TarsPluginManager:
     def __init__(self, tars, pluginDir=None):
         self.tars = tars
         self.plugins = {}
-        self.pluginDir = pluginDir or os.path.expanduser("~/.tars/plugins")
+        self.pluginDir = os.path.expanduser(pluginDir) or os.path.expanduser("~/.tars/plugins")
         self.transforms = {}
 
         try:
@@ -192,9 +192,9 @@ class TarsArgs:
 
 class TarsConfiguration:      
     """
-    Given the config argument, resolve the actual configuration file
+    Given the config argument, resolve the actual package configuration file
     """
-    def get_config(tars):
+    def get_pkg_config(tars):
         tars_files = glob.glob("*.tars")
         config_file = ""
 
@@ -222,13 +222,43 @@ class TarsConfiguration:
     """
     Just load the configuration file as JSON
     """
-    def load_config(tars):
+    def load_pkg_config(tars):
         try:
             with open(tars.config_file, "r") as f:
                 data = json.load(f)
                 return data
         except Exception as e:
             TarsUtils.error(e)
+
+    """
+    Applies tars global configuration information
+    """
+    def load_tars_config(tars):
+        if os.path.exists(os.path.expanduser("~/.tars/tars-config")):
+            try:
+                if tars.verbose:
+                    TarsUtils.info("parsing configuration file at '~/.tars/tars-config'")
+
+                with open(os.path.expanduser("~/.tars/tars-config"), "r") as f:
+                    for l in f.readlines():
+                        line = l.strip()
+
+                        if line.startswith("#"):
+                            continue
+
+                        var = line.split("=")[0].strip()
+                        val = line.split("=")[1].strip()
+
+                        if tars.verbose:
+                            TarsUtils.info(f"applying '{var}' = '{val}' from configuration")
+
+                        if var == "TARS_PLUGIN_DIR":
+                            tars.pluginDir = val
+                        else:
+                            TarsUtils.warn(f"invalid configuration variable '{var}' in '~/.tars/tars-config'")
+
+            except Exception as e:
+                TarsUtils.error("invalid configuration file at '~/.tars/tars-config'")
 
     """
     Parse command line arguments into a TarsArgs structure
@@ -278,12 +308,15 @@ class Tars:
         self.config = args.config
         self.verbose = args.verbose
 
-        self.config_file = TarsConfiguration.get_config(self)
+        self.config_file = TarsConfiguration.get_pkg_config(self)
 
         pkg = TarsPackage()
         pkg.parse_from_file(self)
 
-        tp = TarsPluginManager(self)
+        self.pluginDir = "~/.tars/plugins"
+        TarsConfiguration.load_tars_config(self)
+
+        tp = TarsPluginManager(self, pluginDir=self.pluginDir)
         tp.load_plugins()
 
         pkg.run_targets(tp)

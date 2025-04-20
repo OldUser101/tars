@@ -96,6 +96,20 @@ Transforms are typically specified in the format `plugin:transform`, so `fs:copy
 
 Hopefully you can see how easy tars is to use.
 
+## Configuration
+
+tars has a global configuration file located at `~/.tars/tars-config`.
+
+Currently, the only value that can be set is `TARS_PLUGIN_DIR` which controls the directory tars searches for plugins in, this is very useful if you are designing your own.
+
+You can set it like this:
+
+```
+TARS_PLUGIN_DIR=/path/to/your/plugin/directory
+```
+
+The configuration file allows you to comment lines with #.
+
 ## Plugins
 
 I'm still working on actually creating these plugins (even `fs` is just limited to the `copy` transform, and not even public), but you can always write your own.
