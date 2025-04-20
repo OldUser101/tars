@@ -1,0 +1,11 @@
+{
+    "package": "tars",
+    "targets": [
+        {
+            "name": "copy-tars",
+            "transform": "fs:copy",
+            "src": "./tars.py",
+            "dest": "~/.tars/"
+        }
+    ]
+}

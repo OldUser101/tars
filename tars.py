@@ -240,6 +240,9 @@ class TarsConfiguration:
             if arg.startswith("-"):
                 if arg == "-v" or arg == "--verbose":
                     ta.verbose = True
+                elif arg == "--version":
+                    tars.version()
+                    sys.exit(0)
                 elif arg == "-h" or arg == "--help":
                     tars.usage()
                     sys.exit(0)
@@ -262,6 +265,8 @@ class TarsConfiguration:
         return ta
 
 class Tars:
+    VERSION = "0.1.0"
+
     """
     Initialize, parse, and run a tars configuration
     """
@@ -287,16 +292,22 @@ class Tars:
     Displays the tars help message
     """
     def usage(self, nl=False):
-        print("\033[92musage:\033[97m tars [-h] [-v] <config>")
+        print("\033[92musage:\033[97m tars [-h] [-v] [--version] <config>")
         print("\n\033[95mtars\033[97m - the artifact resolution system\n")
         print("required arguments:")
         print("\t\033[92mconfig\033[97m\tthe tars package configuration file (.tars) to process\n")
         print("optional arguments:")
         print("\t\033[92m-v, --verbose\033[97m\tenable verbose output")
-        print("\t\033[92m-h, --help\033[97m\tdisplays this help message\033[0m")
+        print("\t\033[92m-h, --help\033[97m\tdisplays this help message")
+        print("\t\033[92m--version\033[97m\tshow tars version\033[0m")
 
         if nl:
             print()
+
+    def version(self):
+        print(f"\033[95mtars\033[97m version {self.VERSION}")
+        print("(c) 2025, Nathan Gill. See LICENSE for details.")
+        print("https://github.com/OldUser101/tars\033[0m")
 
 if __name__ == "__main__":
     Tars()
