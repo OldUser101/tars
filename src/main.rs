@@ -4,14 +4,23 @@ use std::{
     path::Path,
 };
 use walkdir::WalkDir;
+use copy_dir::copy_dir;
 
 fn main() {
     let src_root = Path::new("content");
+    let static_root = Path::new("static");
     let dst_root = Path::new("build");
 
     // Clean any existing build
     if dst_root.is_dir() {
         remove_dir_all(dst_root).unwrap();
+        create_dir_all(dst_root).unwrap();
+    }
+
+    // Copy the static content directory
+    if static_root.is_dir() {
+        copy_dir(static_root, dst_root.join("static")).unwrap();
+        println!("Copied static content directory");
     }
 
     for entry in WalkDir::new(src_root) {
