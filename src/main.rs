@@ -1,6 +1,7 @@
 use copy_dir::copy_dir;
+use minijinja::Environment;
 use std::{
-    fs::{create_dir_all, remove_dir_all, write},
+    fs::{create_dir_all, read_to_string, remove_dir_all, write},
     path::Path,
 };
 use walkdir::WalkDir;
@@ -10,6 +11,7 @@ pub mod markdown;
 fn main() {
     let src_root = Path::new("content");
     let static_root = Path::new("static");
+    let tmpl_root = Path::new("template");
     let dst_root = Path::new("build");
 
     // Clean any existing build
@@ -34,11 +36,21 @@ fn main() {
         if entry_type.is_file() {
             let page = markdown::parse_content_file(&path.to_path_buf()).unwrap();
 
-            println!("{:#?}", page.frontmatter);
-
             dst_path.set_extension("html");
 
-            write(&dst_path, page.content).unwrap();
+            if let Some(tmpl_name) = &page.meta.template {
+                let tmpl_str = read_to_string(tmpl_root.join(tmpl_name)).unwrap();
+
+                let mut env = Environment::new();
+                env.add_template(tmpl_name, &tmpl_str).unwrap();
+                let tmpl = env.get_template(tmpl_name).unwrap();
+
+                let render_str = tmpl.render(&page).unwrap();
+
+                write(&dst_path, render_str).unwrap();
+            } else {
+                write(&dst_path, page.content).unwrap();
+            }
 
             println!("Generated {}", dst_path.display());
         } else if entry_type.is_dir() {

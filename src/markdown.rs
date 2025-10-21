@@ -1,20 +1,20 @@
 use chrono::NaiveDate;
 use pulldown_cmark::{Options, Parser};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct FrontMatter {
-    title: Option<String>,
-    date: Option<NaiveDate>,
-    author: Option<String>,
-    draft: Option<bool>,
-    template: Option<String>,
-    tags: Option<Vec<String>>,
-    slug: Option<String>,
-    summary: Option<String>,
-    cover_image: Option<String>,
+    pub title: Option<String>,
+    pub date: Option<NaiveDate>,
+    pub author: Option<String>,
+    pub draft: Option<bool>,
+    pub template: Option<String>,
+    pub tags: Option<Vec<String>>,
+    pub slug: Option<String>,
+    pub summary: Option<String>,
+    pub cover_image: Option<String>,
 }
 
 impl FrontMatter {
@@ -49,9 +49,11 @@ impl Default for FrontMatter {
     }
 }
 
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Page {
+    #[serde(skip)]
     pub path: PathBuf,
-    pub frontmatter: FrontMatter,
+    pub meta: FrontMatter,
     pub content: String,
 }
 
@@ -83,7 +85,7 @@ pub fn parse_content_file(path: &PathBuf) -> Result<Page, Box<dyn std::error::Er
 
     Ok(Page {
         path: path.to_path_buf(),
-        frontmatter,
-        content: content.to_string(),
+        meta: frontmatter,
+        content: html_output.to_string(),
     })
 }
