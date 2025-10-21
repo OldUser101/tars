@@ -1,20 +1,52 @@
+use chrono::NaiveDate;
 use pulldown_cmark::{Options, Parser};
 use serde::Deserialize;
 use std::fs;
 use std::path::PathBuf;
-use chrono::NaiveDate;
 
-#[derive(Debug, Deserialize, Default)]
+#[derive(Debug, Deserialize)]
 pub struct FrontMatter {
     title: Option<String>,
     date: Option<NaiveDate>,
     author: Option<String>,
-    draft: bool,
+    draft: Option<bool>,
     template: Option<String>,
     tags: Option<Vec<String>>,
     slug: Option<String>,
     summary: Option<String>,
     cover_image: Option<String>,
+}
+
+impl FrontMatter {
+    pub fn merge_with_default(&self) -> Self {
+        Self {
+            title: self.title.clone(),
+            date: self.date,
+            author: self.author.clone(),
+            draft: self.draft.or(Some(false)),
+            template: self.template.clone().or(Some("default.html".to_string())),
+            tags: self.tags.clone(),
+            slug: self.slug.clone(),
+            summary: self.summary.clone(),
+            cover_image: self.cover_image.clone(),
+        }
+    }
+}
+
+impl Default for FrontMatter {
+    fn default() -> Self {
+        Self {
+            title: None,
+            date: None,
+            author: None,
+            draft: Some(false),
+            template: Some("default.html".to_string()),
+            tags: None,
+            slug: None,
+            summary: None,
+            cover_image: None,
+        }
+    }
 }
 
 pub struct Page {
@@ -30,8 +62,8 @@ fn split_frontmatter(content: &str) -> (FrontMatter, &str) {
         if let Some(end) = content[3..].find("---") {
             let fm_str = &content[3..3 + end];
             let body = &content[3 + end + 3..];
-            let fm = serde_yaml::from_str(fm_str).unwrap_or_default();
-            return (fm, body);
+            let fm: FrontMatter = serde_yaml::from_str(fm_str).unwrap_or_default();
+            return (fm.merge_with_default(), body);
         }
     }
     (FrontMatter::default(), content)
