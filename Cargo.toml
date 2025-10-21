@@ -1,7 +1,15 @@
 [package]
-name = "tars"
+name = "tars-bin"
 version = "0.1.0"
 edition = "2024"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/OldUser101/tars"
+description = "A small, fast, static site generator."
+readme = "README.md"
+
+[[bin]]
+name = "tars"
+path = "src/main.rs"
 
 [dependencies]
 chrono = { version = "0.4.42", features = [ "serde" ] }
