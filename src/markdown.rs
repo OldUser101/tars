@@ -2,10 +2,19 @@ use pulldown_cmark::{Options, Parser};
 use serde::Deserialize;
 use std::fs;
 use std::path::PathBuf;
+use chrono::NaiveDate;
 
 #[derive(Debug, Deserialize, Default)]
 pub struct FrontMatter {
     title: Option<String>,
+    date: Option<NaiveDate>,
+    author: Option<String>,
+    draft: bool,
+    template: Option<String>,
+    tags: Option<Vec<String>>,
+    slug: Option<String>,
+    summary: Option<String>,
+    cover_image: Option<String>,
 }
 
 pub struct Page {
