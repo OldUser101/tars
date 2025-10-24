@@ -1,17 +1,18 @@
 use copy_dir::copy_dir;
-use minijinja::Environment;
 use std::{
-    fs::{create_dir_all, read_to_string, remove_dir_all, write},
+    fs::{create_dir_all, remove_dir_all, write},
     path::Path,
 };
 use walkdir::WalkDir;
 
+use crate::template::TemplateEnvironment;
+
 pub mod markdown;
+pub mod template;
 
 fn main() {
     let src_root = Path::new("content");
     let static_root = Path::new("static");
-    let tmpl_root = Path::new("template");
     let dst_root = Path::new("build");
 
     // Clean any existing build
@@ -26,6 +27,9 @@ fn main() {
         println!("Copied static content directory");
     }
 
+    let mut tmpl_env = TemplateEnvironment::new();
+    tmpl_env.load_templates().unwrap();
+
     for entry in WalkDir::new(src_root) {
         let entry = entry.unwrap();
         let entry_type = entry.file_type();
@@ -39,14 +43,7 @@ fn main() {
             dst_path.set_extension("html");
 
             if let Some(tmpl_name) = &page.meta.template {
-                let tmpl_str = read_to_string(tmpl_root.join(tmpl_name)).unwrap();
-
-                let mut env = Environment::new();
-                env.add_template(tmpl_name, &tmpl_str).unwrap();
-                let tmpl = env.get_template(tmpl_name).unwrap();
-
-                let render_str = tmpl.render(&page).unwrap();
-
+                let render_str = tmpl_env.render_template(&page, tmpl_name).unwrap();
                 write(&dst_path, render_str).unwrap();
             } else {
                 write(&dst_path, page.content).unwrap();
