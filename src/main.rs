@@ -5,7 +5,7 @@ use std::{
 };
 use walkdir::WalkDir;
 
-use crate::template::TemplateEnvironment;
+use crate::{markdown::Page, template::TemplateEnvironment};
 
 pub mod markdown;
 pub mod template;
@@ -38,7 +38,7 @@ fn main() {
         let mut dst_path = dst_root.join(rel_path);
 
         if entry_type.is_file() {
-            let page = markdown::parse_content_file(&path.to_path_buf()).unwrap();
+            let page = Page::from_file(&path.to_path_buf()).unwrap();
 
             dst_path.set_extension("html");
 

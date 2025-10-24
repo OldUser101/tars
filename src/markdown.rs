@@ -57,6 +57,27 @@ pub struct Page {
     pub content: String,
 }
 
+impl Page {
+    /// Parse a content file into a `Page` structure
+    pub fn from_file(path: &PathBuf) -> Result<Self, Box<dyn std::error::Error>> {
+        let content = fs::read_to_string(path)?;
+        let (frontmatter, content) = split_frontmatter(&content);
+
+        let mut options = Options::empty();
+        options.insert(Options::ENABLE_YAML_STYLE_METADATA_BLOCKS);
+        let parser = Parser::new_ext(content, options);
+
+        let mut html_output = String::new();
+        pulldown_cmark::html::push_html(&mut html_output, parser);
+
+        Ok(Self {
+            path: path.to_path_buf(),
+            meta: frontmatter,
+            content: html_output.to_string(),
+        })
+    }
+}
+
 /// Split frontmatter metadata from Markdown content
 fn split_frontmatter(content: &str) -> (FrontMatter, &str) {
     let content = content.trim_start();
@@ -69,23 +90,4 @@ fn split_frontmatter(content: &str) -> (FrontMatter, &str) {
         }
     }
     (FrontMatter::default(), content)
-}
-
-/// Parse a content file into a `Page` structure
-pub fn parse_content_file(path: &PathBuf) -> Result<Page, Box<dyn std::error::Error>> {
-    let content = fs::read_to_string(path)?;
-    let (frontmatter, content) = split_frontmatter(&content);
-
-    let mut options = Options::empty();
-    options.insert(Options::ENABLE_YAML_STYLE_METADATA_BLOCKS);
-    let parser = Parser::new_ext(content, options);
-
-    let mut html_output = String::new();
-    pulldown_cmark::html::push_html(&mut html_output, parser);
-
-    Ok(Page {
-        path: path.to_path_buf(),
-        meta: frontmatter,
-        content: html_output.to_string(),
-    })
 }
