@@ -2,13 +2,15 @@ use chrono::NaiveDate;
 use pulldown_cmark::{Options, Parser};
 use serde::{Deserialize, Serialize};
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FrontMatter {
     pub title: Option<String>,
     pub date: Option<NaiveDate>,
     pub author: Option<String>,
+    #[serde(rename(serialize = "type", deserialize = "type"))]
+    pub page_type: Option<String>,
     pub draft: Option<bool>,
     pub template: Option<String>,
     pub tags: Option<Vec<String>>,
@@ -23,6 +25,7 @@ impl FrontMatter {
             title: self.title.clone(),
             date: self.date,
             author: self.author.clone(),
+            page_type: self.page_type.clone(),
             draft: self.draft.or(Some(false)),
             template: self.template.clone().or(Some("default.html".to_string())),
             tags: self.tags.clone(),
@@ -39,6 +42,7 @@ impl Default for FrontMatter {
             title: None,
             date: None,
             author: None,
+            page_type: None,
             draft: Some(false),
             template: Some("default.html".to_string()),
             tags: None,
@@ -53,13 +57,15 @@ impl Default for FrontMatter {
 pub struct Page {
     #[serde(skip)]
     pub path: PathBuf,
+    #[serde(rename(serialize = "path"))]
+    pub rel_path: PathBuf,
     pub meta: FrontMatter,
     pub content: String,
 }
 
 impl Page {
     /// Parse a content file into a `Page` structure
-    pub fn from_file(path: &PathBuf) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn from_file(src_root: &Path, path: &PathBuf) -> Result<Self, Box<dyn std::error::Error>> {
         let content = fs::read_to_string(path)?;
         let (frontmatter, content) = split_frontmatter(&content);
 
@@ -70,8 +76,12 @@ impl Page {
         let mut html_output = String::new();
         pulldown_cmark::html::push_html(&mut html_output, parser);
 
+        let mut rel_path = path.strip_prefix(src_root)?.to_path_buf();
+        rel_path.set_extension("html");
+
         Ok(Self {
             path: path.to_path_buf(),
+            rel_path,
             meta: frontmatter,
             content: html_output.to_string(),
         })

@@ -1,7 +1,29 @@
-use std::{fs, path::Path};
+use std::{fs, path::{Path, PathBuf}};
 use walkdir::WalkDir;
+use serde::Serialize;
 
-use crate::markdown::Page;
+use crate::markdown::{FrontMatter, Page};
+
+#[derive(Serialize)]
+pub struct TemplateContext<'a> {
+    pub pages: &'a [Page],
+    pub meta: &'a FrontMatter,
+    pub content: &'a String,
+    pub path: &'a PathBuf,
+}
+
+impl<'a> TemplateContext<'a> {
+    /// Create a new `TemplateContext` object given a page list
+    /// and current page.
+    pub fn new(pages: &'a Vec<Page>, page: &'a Page) -> Self {
+        Self {
+            pages,
+            meta: &page.meta,
+            content: &page.content,
+            path: &page.rel_path,
+        }
+    }
+}
 
 pub struct TemplateEnvironment<'a> {
     env: minijinja::Environment<'a>,
@@ -49,7 +71,7 @@ impl<'a> TemplateEnvironment<'a> {
     /// Render a template given context and name.
     pub fn render_template(
         &self,
-        context: &Page,
+        context: &TemplateContext,
         tmpl_name: &str,
     ) -> Result<String, Box<dyn std::error::Error>> {
         let tmpl = self.env.get_template(tmpl_name)?;
