@@ -3,6 +3,7 @@ use pulldown_cmark::{Options, Parser};
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
+use anyhow::Result;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FrontMatter {
@@ -11,6 +12,7 @@ pub struct FrontMatter {
     pub author: Option<String>,
     #[serde(rename(serialize = "type", deserialize = "type"))]
     pub page_type: Option<String>,
+    #[serde(default)]
     pub draft: bool,
     pub template: Option<String>,
     pub tags: Option<Vec<String>>,
@@ -65,7 +67,7 @@ pub struct Page {
 
 impl Page {
     /// Parse a content file into a `Page` structure
-    pub fn from_file(src_root: &Path, path: &PathBuf) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn from_file(src_root: &Path, path: &PathBuf) -> Result<Self> {
         let content = fs::read_to_string(path)?;
         let (frontmatter, content) = split_frontmatter(&content);
 

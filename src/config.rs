@@ -33,7 +33,7 @@ pub struct Build {
     #[serde(default = "default_build_dir")]
     pub build_dir: String,
     #[serde(default)]
-    pub include_drafts: bool,
+    pub drafts: bool,
 }
 
 impl Default for Site {
@@ -55,7 +55,7 @@ impl Default for Build {
             template_dir: default_template_dir(),
             static_dir: default_static_dir(),
             build_dir: default_build_dir(),
-            include_drafts: false,
+            drafts: false,
         }
     }
 }

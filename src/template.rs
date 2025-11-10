@@ -2,6 +2,7 @@ use std::{fs, path::{Path, PathBuf}};
 use minijinja::value::Value;
 use walkdir::WalkDir;
 use serde::Serialize;
+use anyhow::Result;
 
 use crate::{config::Config, markdown::{FrontMatter, Page}};
 
@@ -42,7 +43,7 @@ impl<'a> TemplateEnvironment<'a> {
     ///
     /// This function succeeds if all templates are valid, or if the `templates`
     /// directory doesn't exist.
-    pub fn load_templates(&mut self, config: &Config) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn load_templates(&mut self, config: &Config) -> Result<()> {
         let tmpl_root = Path::new(&config.build.template_dir);
 
         // If the templates directory doesn't exist, don't try to load anything.
@@ -77,7 +78,7 @@ impl<'a> TemplateEnvironment<'a> {
         &self,
         context: &TemplateContext,
         tmpl_name: &str,
-    ) -> Result<String, Box<dyn std::error::Error>> {
+    ) -> Result<String> {
         let tmpl = self.env.get_template(tmpl_name)?;
         let render_str = tmpl.render(context)?;
         Ok(render_str)
