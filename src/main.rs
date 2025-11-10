@@ -6,17 +6,18 @@ use std::{
 use walkdir::WalkDir;
 
 use crate::{
-    markdown::Page,
-    template::{TemplateContext, TemplateEnvironment},
+    config::Config, markdown::Page, template::{TemplateContext, TemplateEnvironment}
 };
 
 pub mod markdown;
 pub mod template;
+pub mod config;
 
 fn main() {
-    let src_root = Path::new("content");
-    let static_root = Path::new("static");
-    let dst_root = Path::new("build");
+    let config = Config::from_file("tars.toml").unwrap_or_default();
+    let src_root = Path::new(&config.build.content_dir);
+    let static_root = Path::new(&config.build.static_dir);
+    let dst_root = Path::new(&config.build.build_dir);
 
     // Clean any existing build
     if dst_root.is_dir() {
@@ -27,12 +28,12 @@ fn main() {
 
     // Copy the static content directory
     if static_root.is_dir() {
-        copy_dir(static_root, dst_root.join("static")).unwrap();
+        copy_dir(static_root, dst_root.join(&config.build.static_dir)).unwrap();
         println!("Copied static content directory");
     }
 
     let mut tmpl_env = TemplateEnvironment::new();
-    tmpl_env.load_templates().unwrap();
+    tmpl_env.load_templates(&config).unwrap();
 
     let mut pages = Vec::new();
 
@@ -53,6 +54,11 @@ fn main() {
 
     for i in 0..pages.len() {
         let page = &pages[i];
+
+        if !config.build.include_drafts && page.meta.draft {
+            continue;
+        }
+        
         let ctx = TemplateContext::new(&pages, page);
 
         let mut dst_path = dst_root.join(&page.rel_path);

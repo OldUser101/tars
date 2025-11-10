@@ -1,8 +1,9 @@
 use std::{fs, path::{Path, PathBuf}};
+use minijinja::value::Value;
 use walkdir::WalkDir;
 use serde::Serialize;
 
-use crate::markdown::{FrontMatter, Page};
+use crate::{config::Config, markdown::{FrontMatter, Page}};
 
 #[derive(Serialize)]
 pub struct TemplateContext<'a> {
@@ -41,8 +42,8 @@ impl<'a> TemplateEnvironment<'a> {
     ///
     /// This function succeeds if all templates are valid, or if the `templates`
     /// directory doesn't exist.
-    pub fn load_templates(&mut self) -> Result<(), Box<dyn std::error::Error>> {
-        let tmpl_root = Path::new("template");
+    pub fn load_templates(&mut self, config: &Config) -> Result<(), Box<dyn std::error::Error>> {
+        let tmpl_root = Path::new(&config.build.template_dir);
 
         // If the templates directory doesn't exist, don't try to load anything.
         if !tmpl_root.is_dir() {
@@ -64,6 +65,9 @@ impl<'a> TemplateEnvironment<'a> {
                 println!("Loaded template {name}");
             }
         }
+
+        self.env.add_global("site", Value::from_serialize(&config.site));
+        self.env.add_global("extra", Value::from_serialize(&config.extra));
 
         Ok(())
     }
