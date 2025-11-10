@@ -1,9 +1,9 @@
+use anyhow::Result;
 use chrono::NaiveDate;
 use pulldown_cmark::{Options, Parser};
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
-use anyhow::Result;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FrontMatter {

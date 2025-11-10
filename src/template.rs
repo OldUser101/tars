@@ -1,10 +1,16 @@
-use std::{fs, path::{Path, PathBuf}};
-use minijinja::value::Value;
-use walkdir::WalkDir;
-use serde::Serialize;
 use anyhow::Result;
+use minijinja::value::Value;
+use serde::Serialize;
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
+use walkdir::WalkDir;
 
-use crate::{config::Config, markdown::{FrontMatter, Page}};
+use crate::{
+    config::Config,
+    markdown::{FrontMatter, Page},
+};
 
 #[derive(Serialize)]
 pub struct TemplateContext<'a> {
@@ -67,18 +73,16 @@ impl<'a> TemplateEnvironment<'a> {
             }
         }
 
-        self.env.add_global("site", Value::from_serialize(&config.site));
-        self.env.add_global("extra", Value::from_serialize(&config.extra));
+        self.env
+            .add_global("site", Value::from_serialize(&config.site));
+        self.env
+            .add_global("extra", Value::from_serialize(&config.extra));
 
         Ok(())
     }
 
     /// Render a template given context and name.
-    pub fn render_template(
-        &self,
-        context: &TemplateContext,
-        tmpl_name: &str,
-    ) -> Result<String> {
+    pub fn render_template(&self, context: &TemplateContext, tmpl_name: &str) -> Result<String> {
         let tmpl = self.env.get_template(tmpl_name)?;
         let render_str = tmpl.render(context)?;
         Ok(render_str)
