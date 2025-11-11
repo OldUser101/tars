@@ -5,6 +5,8 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use crate::config::Config;
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FrontMatter {
     pub title: Option<String>,
@@ -22,36 +24,35 @@ pub struct FrontMatter {
 }
 
 impl FrontMatter {
-    pub fn merge_with_default(&self) -> Self {
+    pub fn merge_with_default(&self, config: &Config) -> Self {
         Self {
             title: self.title.clone(),
             date: self.date,
             author: self.author.clone(),
             page_type: self.page_type.clone(),
             draft: self.draft,
-            template: self.template.clone().or(Some("default.html".to_string())),
+            template: self.template.clone().or(Some(config.site.default_template.clone())),
             tags: self.tags.clone(),
             slug: self.slug.clone(),
             summary: self.summary.clone(),
             cover_image: self.cover_image.clone(),
         }
     }
-}
 
-impl Default for FrontMatter {
-    fn default() -> Self {
+    fn new(config: &Config) -> Self {
         Self {
             title: None,
             date: None,
             author: None,
             page_type: None,
             draft: false,
-            template: Some("default.html".to_string()),
+            template: Some(config.site.default_template.clone()),
             tags: None,
             slug: None,
             summary: None,
             cover_image: None,
         }
+
     }
 }
 
@@ -67,9 +68,9 @@ pub struct Page {
 
 impl Page {
     /// Parse a content file into a `Page` structure
-    pub fn from_file(src_root: &Path, path: &PathBuf) -> Result<Self> {
+    pub fn from_file(config: &Config, src_root: &Path, path: &PathBuf) -> Result<Self> {
         let content = fs::read_to_string(path)?;
-        let (frontmatter, content) = split_frontmatter(&content);
+        let (frontmatter, content) = split_frontmatter(config, &content);
 
         let mut options = Options::empty();
         options.insert(Options::ENABLE_YAML_STYLE_METADATA_BLOCKS);
@@ -91,15 +92,15 @@ impl Page {
 }
 
 /// Split frontmatter metadata from Markdown content
-fn split_frontmatter(content: &str) -> (FrontMatter, &str) {
+fn split_frontmatter<'a>(config: &Config, content: &'a str) -> (FrontMatter, &'a str) {
     let content = content.trim_start();
     if content.starts_with("---") {
         if let Some(end) = content[3..].find("---") {
             let fm_str = &content[3..3 + end];
             let body = &content[3 + end + 3..];
-            let fm: FrontMatter = serde_yaml::from_str(fm_str).unwrap_or_default();
-            return (fm.merge_with_default(), body);
+            let fm: FrontMatter = serde_yaml::from_str(fm_str).unwrap_or(FrontMatter::new(config));
+            return (fm.merge_with_default(config), body);
         }
     }
-    (FrontMatter::default(), content)
+    (FrontMatter::new(config), content)
 }

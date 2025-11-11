@@ -66,7 +66,7 @@ impl<'a> Builder<'a> {
             let dst_path = self.build_root.join(rel_path);
 
             if entry_type.is_file() {
-                let page = Page::from_file(self.content_root, &path.to_path_buf())?;
+                let page = Page::from_file(self.config, self.content_root, &path.to_path_buf())?;
                 self.pages.push(page);
             } else if entry_type.is_dir() {
                 create_dir_all(dst_path)?;
