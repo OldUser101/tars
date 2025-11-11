@@ -94,13 +94,6 @@ async fn main() {
         }
         TarsSubcommand::Serve(args) => {
             let config = load_config(&args.config);
-            let mut builder = Builder::new(&config);
-
-            println!("Building...");
-            if let Err(e) = builder.build() {
-                println!("{e}");
-                return;
-            }
 
             if let Err(e) = run_server(Arc::new(config)).await {
                 println!("{e}");

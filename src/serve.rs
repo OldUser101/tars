@@ -11,10 +11,6 @@ pub async fn run_server(config: Arc<Config>) -> Result<()> {
     let socket_addr: SocketAddr = socket_str.parse()?;
     let build_dir = config.build.build_dir.clone();
 
-    let mut builder = Builder::new(&config);
-    println!("Building...");
-    builder.build()?;
-
     let (notify_tx, notify_rx) = mpsc::channel::<notify::Result<Event>>();
     let mut watcher = notify::recommended_watcher(notify_tx)?;
     watcher.watch(
@@ -32,6 +28,11 @@ pub async fn run_server(config: Arc<Config>) -> Result<()> {
 
     tokio::spawn(async move {
         let mut builder = Builder::new(&config);
+        println!("Building...");
+        if let Err(e) = builder.build() {
+            println!("Build error: {e}");
+        }
+
         for res in notify_rx {
             match res {
                 Ok(event) => match event.kind {
@@ -50,7 +51,7 @@ pub async fn run_server(config: Arc<Config>) -> Result<()> {
         }
     });
 
-    println!("Running server on {socket_addr}");
+    println!("Running server on http://{socket_addr}");
 
     warp::serve(warp::fs::dir(build_dir)).run(socket_addr).await;
 
