@@ -9,6 +9,8 @@ pub struct Config {
     #[serde(default)]
     pub build: Build,
     #[serde(default)]
+    pub serve: Serve,
+    #[serde(default)]
     pub extra: HashMap<String, toml::Value>,
 }
 
@@ -36,6 +38,14 @@ pub struct Build {
     pub drafts: bool,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Serve {
+    #[serde(default = "default_serve_host")]
+    pub host: String,
+    #[serde(default = "default_serve_port")]
+    pub port: u16,
+}
+
 impl Default for Site {
     fn default() -> Self {
         Self {
@@ -60,6 +70,15 @@ impl Default for Build {
     }
 }
 
+impl Default for Serve {
+    fn default() -> Self {
+         Self {
+            host: default_serve_host(),
+            port: default_serve_port(),
+         }
+    }
+}
+
 fn default_template_name() -> String {
     "default.html".to_string()
 }
@@ -74,6 +93,12 @@ fn default_template_dir() -> String {
 }
 fn default_build_dir() -> String {
     "build".to_string()
+}
+fn default_serve_host() -> String {
+    "127.0.0.1".to_string()
+}
+fn default_serve_port() -> u16 {
+    8080u16
 }
 
 impl Config {

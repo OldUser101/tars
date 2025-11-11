@@ -14,6 +14,7 @@ pub enum TarsSubcommand {
     Init(InitArgs),
     Build(BuildArgs),
     Clean(CleanArgs),
+    Serve(ServeArgs),
 }
 
 pub struct InitArgs {
@@ -26,6 +27,10 @@ pub struct BuildArgs {
 }
 
 pub struct CleanArgs {
+    pub config: String,
+}
+
+pub struct ServeArgs {
     pub config: String,
 }
 
@@ -47,6 +52,14 @@ impl Default for BuildArgs {
 }
 
 impl Default for CleanArgs {
+    fn default() -> Self {
+        Self {
+            config: DEFAULT_TARS_CONFIG_FILE.to_string(),
+        }
+    }
+}
+
+impl Default for ServeArgs {
     fn default() -> Self {
         Self {
             config: DEFAULT_TARS_CONFIG_FILE.to_string(),
@@ -111,6 +124,18 @@ fn build_cli() -> Command {
                 )
                 .about("Clean build outputs"),
         )
+        .subcommand(
+            Command::new("serve")
+                .arg(
+                    Arg::new("config")
+                        .long("config")
+                        .value_name("CONFIG")
+                        .required(false)
+                        .default_value(DEFAULT_TARS_CONFIG_FILE)
+                        .help("Specify the configuration file to use"),
+                )
+                .about("Serve generated files"),
+        )
 }
 
 pub fn parse_args() -> Result<Args> {
@@ -142,6 +167,15 @@ pub fn parse_args() -> Result<Args> {
 
             Ok(Args {
                 subcommand: TarsSubcommand::Clean(CleanArgs {
+                    config: config.clone(),
+                }),
+            })
+        }
+        Some(("serve", args)) => {
+            let config = args.get_one::<String>("config").unwrap();
+
+            Ok(Args {
+                subcommand: TarsSubcommand::Serve(ServeArgs {
                     config: config.clone(),
                 }),
             })

@@ -2,9 +2,9 @@ use anyhow::{Result, anyhow};
 use std::{path::Path, process::exit};
 
 use crate::{
-    args::{DEFAULT_TARS_CONFIG_FILE, InitArgs, TarsSubcommand, parse_args},
+    args::{parse_args, InitArgs, TarsSubcommand, DEFAULT_TARS_CONFIG_FILE},
     build::Builder,
-    config::Config,
+    config::Config, serve::run_server,
 };
 
 pub mod args;
@@ -12,6 +12,7 @@ pub mod build;
 pub mod config;
 pub mod markdown;
 pub mod template;
+pub mod serve;
 
 fn is_dir_empty(path: &Path) -> std::io::Result<bool> {
     let mut entries = std::fs::read_dir(path)?;
@@ -50,7 +51,8 @@ fn init_project(args: &InitArgs, config: &Config) -> Result<()> {
     Ok(())
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let args = parse_args().unwrap_or_else(|e| {
         println!("{e}");
         exit(1);
@@ -81,6 +83,20 @@ fn main() {
             if let Err(e) = builder.clean() {
                 println!("{e}");
             }
+        }
+        TarsSubcommand::Serve(args) => {
+            let config = Config::from_file(&args.config).unwrap_or_default();
+            let mut builder = Builder::new(&config);
+
+            println!("Building...");
+            if let Err(e) = builder.build() {
+                println!("{e}");
+                return;
+            }
+
+            if let Err(e) = run_server(&config).await {
+                println!("{e}");
+            }   
         }
     }
 }
