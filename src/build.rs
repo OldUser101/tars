@@ -19,6 +19,7 @@ pub struct Builder<'a> {
     content_root: &'a Path,
     static_root: &'a Path,
     build_root: &'a Path,
+    built: bool,
 }
 
 impl<'a> Builder<'a> {
@@ -30,6 +31,7 @@ impl<'a> Builder<'a> {
             content_root: Path::new(&config.build.content_dir),
             static_root: Path::new(&config.build.static_dir),
             build_root: Path::new(&config.build.build_dir),
+            built: false,
         }
     }
 
@@ -100,6 +102,14 @@ impl<'a> Builder<'a> {
         Ok(())
     }
 
+    pub fn rebuild(&mut self) -> Result<()> {
+        self.built = false;
+        self.template_env = TemplateEnvironment::new();
+        self.pages = Vec::new();
+
+        self.build()
+    }
+
     pub fn build(&mut self) -> Result<()> {
         self.clean()?;
 
@@ -110,6 +120,8 @@ impl<'a> Builder<'a> {
         self.template_env.load_templates(self.config)?;
         self.load_pages()?;
         self.generate_pages()?;
+
+        self.built = true;
 
         Ok(())
     }

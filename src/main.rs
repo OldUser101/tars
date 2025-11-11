@@ -1,5 +1,5 @@
 use anyhow::{Result, anyhow};
-use std::{path::Path, process::exit};
+use std::{path::Path, process::exit, sync::Arc};
 
 use crate::{
     args::{parse_args, InitArgs, TarsSubcommand, DEFAULT_TARS_CONFIG_FILE},
@@ -94,7 +94,7 @@ async fn main() {
                 return;
             }
 
-            if let Err(e) = run_server(&config).await {
+            if let Err(e) = run_server(Arc::new(config)).await {
                 println!("{e}");
             }   
         }
