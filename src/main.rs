@@ -2,17 +2,18 @@ use anyhow::{Result, anyhow};
 use std::{path::Path, process::exit, sync::Arc};
 
 use crate::{
-    args::{parse_args, InitArgs, TarsSubcommand, DEFAULT_TARS_CONFIG_FILE},
+    args::{DEFAULT_TARS_CONFIG_FILE, InitArgs, TarsSubcommand, parse_args},
     build::Builder,
-    config::Config, serve::run_server,
+    config::Config,
+    serve::run_server,
 };
 
 pub mod args;
 pub mod build;
 pub mod config;
 pub mod markdown;
-pub mod template;
 pub mod serve;
+pub mod template;
 
 fn is_dir_empty(path: &Path) -> std::io::Result<bool> {
     let mut entries = std::fs::read_dir(path)?;
@@ -51,6 +52,13 @@ fn init_project(args: &InitArgs, config: &Config) -> Result<()> {
     Ok(())
 }
 
+fn load_config(path: &str) -> Config {
+    Config::from_file(path).unwrap_or_else(|e| {
+        eprintln!("Failed to load config '{path}': {e}. Using defaults.");
+        Config::default()
+    })
+}
+
 #[tokio::main]
 async fn main() {
     let args = parse_args().unwrap_or_else(|e| {
@@ -69,7 +77,7 @@ async fn main() {
             }
         }
         TarsSubcommand::Build(args) => {
-            let config = Config::from_file(&args.config).unwrap_or_default();
+            let config = load_config(&args.config);
             let mut builder = Builder::new(&config);
 
             if let Err(e) = builder.build() {
@@ -77,7 +85,7 @@ async fn main() {
             }
         }
         TarsSubcommand::Clean(args) => {
-            let config = Config::from_file(&args.config).unwrap_or_default();
+            let config = load_config(&args.config);
             let builder = Builder::new(&config);
 
             if let Err(e) = builder.clean() {
@@ -85,7 +93,7 @@ async fn main() {
             }
         }
         TarsSubcommand::Serve(args) => {
-            let config = Config::from_file(&args.config).unwrap_or_default();
+            let config = load_config(&args.config);
             let mut builder = Builder::new(&config);
 
             println!("Building...");
@@ -96,7 +104,7 @@ async fn main() {
 
             if let Err(e) = run_server(Arc::new(config)).await {
                 println!("{e}");
-            }   
+            }
         }
     }
 }
