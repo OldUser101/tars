@@ -31,7 +31,10 @@ impl FrontMatter {
             author: self.author.clone(),
             page_type: self.page_type.clone(),
             draft: self.draft,
-            template: self.template.clone().or(Some(config.site.default_template.clone())),
+            template: self
+                .template
+                .clone()
+                .or(Some(config.site.default_template.clone())),
             tags: self.tags.clone(),
             slug: self.slug.clone(),
             summary: self.summary.clone(),
@@ -52,7 +55,6 @@ impl FrontMatter {
             summary: None,
             cover_image: None,
         }
-
     }
 }
 
@@ -72,8 +74,11 @@ impl Page {
         let content = fs::read_to_string(path)?;
         let (frontmatter, content) = split_frontmatter(config, &content);
 
-        let mut options = Options::empty();
-        options.insert(Options::ENABLE_YAML_STYLE_METADATA_BLOCKS);
+        let options = Options::ENABLE_YAML_STYLE_METADATA_BLOCKS
+            | Options::ENABLE_TABLES
+            | Options::ENABLE_FOOTNOTES
+            | Options::ENABLE_STRIKETHROUGH
+            | Options::ENABLE_TASKLISTS;
         let parser = Parser::new_ext(content, options);
 
         let mut html_output = String::new();
