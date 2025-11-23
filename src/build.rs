@@ -1,5 +1,8 @@
 use anyhow::Result;
-use copy_dir::copy_dir;
+use fs_extra::{
+    dir::{CopyOptions as DirOptions, copy as copy_dir},
+    file::{CopyOptions as FileOptions, copy as copy_file},
+};
 use std::{
     fs::{create_dir_all, remove_dir_all, write},
     path::Path,
@@ -47,11 +50,34 @@ impl<'a> Builder<'a> {
     pub fn copy_static(&self) -> Result<()> {
         // Copy the static content directory
         if self.static_root.is_dir() {
-            copy_dir(
-                self.static_root,
-                self.build_root.join(&self.config.build.static_dir),
-            )?;
-            println!("Copied static content directory");
+            let static_dst = self.build_root.join(&self.config.build.static_prefix);
+            if !static_dst.is_dir() {
+                create_dir_all(&static_dst)?;
+            }
+
+            for entry in std::fs::read_dir(self.static_root)? {
+                let entry = entry?;
+                let src_path = entry.path();
+                let dst_path = static_dst.join(entry.file_name());
+
+                if src_path.is_dir() {
+                    let mut options = DirOptions::new();
+                    options.overwrite = true;
+                    options.copy_inside = true;
+
+                    copy_dir(&src_path, &dst_path, &options)?;
+                } else if src_path.is_file() {
+                    let mut options = FileOptions::new();
+                    options.overwrite = true;
+
+                    copy_file(&src_path, &dst_path, &options)?;
+                }
+            }
+
+            println!(
+                "Copied static content directory to {}",
+                static_dst.display()
+            );
         }
 
         Ok(())
@@ -80,7 +106,7 @@ impl<'a> Builder<'a> {
         for i in 0..self.pages.len() {
             let page = &self.pages[i];
 
-            if !self.config.build.drafts && page.meta.draft {
+            if !self.config.build.include_drafts && page.meta.draft {
                 continue;
             }
 

@@ -35,7 +35,9 @@ pub struct Build {
     #[serde(default = "default_build_dir")]
     pub build_dir: String,
     #[serde(default)]
-    pub drafts: bool,
+    pub include_drafts: bool,
+    #[serde(default = "default_static_prefix")]
+    pub static_prefix: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -65,17 +67,18 @@ impl Default for Build {
             template_dir: default_template_dir(),
             static_dir: default_static_dir(),
             build_dir: default_build_dir(),
-            drafts: false,
+            include_drafts: false,
+            static_prefix: default_static_prefix(),
         }
     }
 }
 
 impl Default for Serve {
     fn default() -> Self {
-         Self {
+        Self {
             host: default_serve_host(),
             port: default_serve_port(),
-         }
+        }
     }
 }
 
@@ -93,6 +96,9 @@ fn default_template_dir() -> String {
 }
 fn default_build_dir() -> String {
     "build".to_string()
+}
+fn default_static_prefix() -> String {
+    "static".to_string()
 }
 fn default_serve_host() -> String {
     "127.0.0.1".to_string()
