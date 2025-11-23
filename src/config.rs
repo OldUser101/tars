@@ -12,6 +12,8 @@ pub struct Config {
     pub serve: Serve,
     #[serde(default)]
     pub extra: HashMap<String, toml::Value>,
+    #[serde(default = "default_config_file")]
+    pub path: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -82,6 +84,9 @@ impl Default for Serve {
     }
 }
 
+fn default_config_file() -> String {
+    "tars.toml".to_string()
+}
 fn default_template_name() -> String {
     "default.html".to_string()
 }
@@ -110,7 +115,8 @@ fn default_serve_port() -> u16 {
 impl Config {
     pub fn from_file(path: &str) -> Result<Self> {
         let data = std::fs::read_to_string(path)?;
-        let cfg: Self = toml::from_str(&data)?;
+        let mut cfg: Self = toml::from_str(&data)?;
+        cfg.path = path.to_string();
 
         Ok(cfg)
     }
