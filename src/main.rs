@@ -54,8 +54,8 @@ fn init_project(args: &InitArgs, config: &Config) -> Result<()> {
 
 fn load_config(path: &str) -> Config {
     Config::from_file(path).unwrap_or_else(|e| {
-        eprintln!("Failed to load config '{path}': {e}. Using defaults.");
-        Config::default()
+        eprintln!("Failed to load config file {path}: {e}");
+        exit(1);
     })
 }
 

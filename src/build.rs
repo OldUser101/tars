@@ -192,6 +192,7 @@ impl<'a> Builder<'a> {
         let mut options = DirOptions::new();
         options.overwrite = true;
         options.copy_inside = true;
+        options.content_only = true;
 
         copy_dir(&self.build_root, build_dst, &options)?;
 
