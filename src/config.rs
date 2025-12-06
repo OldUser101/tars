@@ -12,6 +12,9 @@ pub struct Config {
     pub serve: Serve,
     #[serde(default)]
     pub extra: HashMap<String, toml::Value>,
+    #[serde(default)]
+    #[serde(rename = "plugin")]
+    pub plugins: Vec<Plugin>,
     #[serde(default = "default_config_file")]
     pub path: String,
 }
@@ -48,6 +51,20 @@ pub struct Serve {
     pub host: String,
     #[serde(default = "default_serve_port")]
     pub port: u16,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum HookType {
+    Pre,
+    Post,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Plugin {
+    #[serde(rename = "hook")]
+    pub hook_type: HookType,
+    pub name: String,
 }
 
 impl Default for Site {
