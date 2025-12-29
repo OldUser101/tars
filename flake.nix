@@ -15,8 +15,6 @@
         packages = {
           default = naersk-lib.buildPackage {
             name = "tars";
-            version = "0.4.0";
-
             src = ./.;
           };
         };
