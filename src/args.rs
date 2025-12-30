@@ -15,6 +15,7 @@ pub enum TarsSubcommand {
     Build(BuildArgs),
     Clean(CleanArgs),
     Serve(ServeArgs),
+    Plugin(PluginArgs),
 }
 
 pub struct InitArgs {
@@ -24,6 +25,7 @@ pub struct InitArgs {
 
 pub struct BuildArgs {
     pub config: String,
+    pub no_verify: bool,
 }
 
 pub struct CleanArgs {
@@ -32,6 +34,24 @@ pub struct CleanArgs {
 
 pub struct ServeArgs {
     pub config: String,
+}
+
+pub struct PluginArgs {
+    pub subcommand: PluginSubcommand,
+}
+
+pub enum PluginSubcommand {
+    List(PluginListArgs),
+    Hash(PluginHashArgs),
+}
+
+pub struct PluginListArgs {
+    pub config: String,
+}
+
+pub struct PluginHashArgs {
+    pub name: String,
+    pub plugin_dir: String,
 }
 
 impl Default for InitArgs {
@@ -47,6 +67,7 @@ impl Default for BuildArgs {
     fn default() -> Self {
         Self {
             config: DEFAULT_TARS_CONFIG_FILE.to_string(),
+            no_verify: false,
         }
     }
 }
@@ -60,6 +81,14 @@ impl Default for CleanArgs {
 }
 
 impl Default for ServeArgs {
+    fn default() -> Self {
+        Self {
+            config: DEFAULT_TARS_CONFIG_FILE.to_string(),
+        }
+    }
+}
+
+impl Default for PluginListArgs {
     fn default() -> Self {
         Self {
             config: DEFAULT_TARS_CONFIG_FILE.to_string(),
@@ -110,6 +139,12 @@ fn build_cli() -> Command {
                         .default_value(DEFAULT_TARS_CONFIG_FILE)
                         .help("Specify the configuration file to use"),
                 )
+                .arg(
+                    Arg::new("no_verify")
+                        .long("no-verify")
+                        .action(ArgAction::SetTrue)
+                        .help("Skip hash verification of plugins"),
+                )
                 .about("Build the project in the current directory"),
         )
         .subcommand(
@@ -136,6 +171,36 @@ fn build_cli() -> Command {
                 )
                 .about("Serve generated files"),
         )
+        .subcommand(
+            Command::new("plugin")
+                .styles(styles())
+                .subcommand(
+                    Command::new("list")
+                        .arg(
+                            Arg::new("config")
+                                .long("config")
+                                .value_name("CONFIG")
+                                .required(false)
+                                .default_value(DEFAULT_TARS_CONFIG_FILE)
+                                .help("Specify the configuration file to use"),
+                        )
+                        .about("List installed plugins"),
+                )
+                .subcommand(
+                    Command::new("hash")
+                        .arg(Arg::new("name").required(true).help("Plugin name"))
+                        .arg(
+                            Arg::new("plugin_dir")
+                                .long("dir")
+                                .value_name("DIR")
+                                .required(false)
+                                .default_value("plugin")
+                                .help("Plugin directory to search in"),
+                        )
+                        .about("Generate a plugin hash"),
+                )
+                .about("Manage Tars plugins"),
+        )
 }
 
 pub fn parse_args() -> Result<Args> {
@@ -155,10 +220,12 @@ pub fn parse_args() -> Result<Args> {
         }
         Some(("build", args)) => {
             let config = args.get_one::<String>("config").unwrap();
+            let no_verify = args.get_flag("no_verify");
 
             Ok(Args {
                 subcommand: TarsSubcommand::Build(BuildArgs {
                     config: config.clone(),
+                    no_verify,
                 }),
             })
         }
@@ -180,11 +247,31 @@ pub fn parse_args() -> Result<Args> {
                 }),
             })
         }
-        _ => {
-            let mut cmd = build_cli();
-            cmd.print_help()?;
-            println!();
-            Err(anyhow!("no subcommand specified"))
-        }
+        Some(("plugin", args)) => Ok(Args {
+            subcommand: TarsSubcommand::Plugin(PluginArgs {
+                subcommand: match args.subcommand() {
+                    Some(("list", args)) => {
+                        let config = args.get_one::<String>("config").unwrap();
+
+                        PluginSubcommand::List(PluginListArgs {
+                            config: config.clone(),
+                        })
+                    }
+                    Some(("hash", args)) => {
+                        let plugin_dir = args.get_one::<String>("plugin_dir").unwrap();
+                        let name = args.get_one::<String>("name").unwrap();
+
+                        PluginSubcommand::Hash(PluginHashArgs {
+                            name: name.clone(),
+                            plugin_dir: plugin_dir.clone(),
+                        })
+                    }
+                    _ => {
+                        return Err(anyhow!("no subcommand specified"));
+                    }
+                },
+            }),
+        }),
+        _ => Err(anyhow!("no subcommand specified")),
     }
 }
