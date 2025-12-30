@@ -27,7 +27,7 @@ pub async fn run_server(config: Arc<Config>) -> Result<()> {
     )?;
 
     tokio::spawn(async move {
-        let mut builder = Builder::new(&config);
+        let mut builder = Builder::new(&config, false);
         println!("Building...");
         if let Err(e) = builder.build() {
             println!("Build error: {e}");

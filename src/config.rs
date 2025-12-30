@@ -1,6 +1,10 @@
-use anyhow::Result;
+use anyhow::{Result, anyhow};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use sha256::try_digest;
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+};
 
 #[derive(Debug, Deserialize, Default)]
 pub struct Config {
@@ -39,10 +43,14 @@ pub struct Build {
     pub static_dir: String,
     #[serde(default = "default_build_dir")]
     pub build_dir: String,
+    #[serde(default = "default_plugin_dir")]
+    pub plugin_dir: String,
     #[serde(default)]
     pub include_drafts: bool,
     #[serde(default = "default_static_prefix")]
     pub static_prefix: String,
+    #[serde(default)]
+    pub no_verify: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -53,7 +61,7 @@ pub struct Serve {
     pub port: u16,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(PartialEq, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum HookType {
     Pre,
@@ -65,6 +73,66 @@ pub struct Plugin {
     #[serde(rename = "hook")]
     pub hook_type: HookType,
     pub name: String,
+    pub hash: String,
+}
+
+impl Plugin {
+    pub fn get_hash(&self, plugin_dir: &Path) -> Result<String> {
+        let mut plugin_path = PathBuf::from(plugin_dir);
+        plugin_path.push(&self.name);
+
+        let digest = try_digest(plugin_path)?;
+
+        Ok(digest.to_string())
+    }
+
+    pub fn resolve(&self, plugin_dir: &Path, no_verify: bool) -> Result<PathBuf> {
+        let mut plugin_path = PathBuf::from(plugin_dir);
+        plugin_path.push(&self.name);
+
+        let plugin_path = plugin_path.canonicalize()?;
+
+        if !plugin_path.is_file() {
+            return Err(anyhow!("plugin '{}' could not be located.", self.name));
+        }
+
+        if no_verify {
+            return Ok(plugin_path);
+        }
+
+        let digest = self.get_hash(plugin_dir)?;
+
+        if digest != self.hash {
+            return Err(anyhow!(
+                "hash {} for plugin '{}' does not match",
+                self.hash,
+                self.name
+            ));
+        }
+
+        Ok(plugin_path)
+    }
+
+    pub fn run(&self, config: &Config, root_dir: &Path, no_verify: bool) -> Result<()> {
+        let plugin_file = self.resolve(Path::new(&config.build.plugin_dir), no_verify)?;
+
+        let status = std::process::Command::new(&plugin_file)
+            .current_dir(root_dir)
+            .status()?;
+        let code = status
+            .code()
+            .ok_or(anyhow!("plugin returned no status code"))?;
+
+        if code != 0 {
+            return Err(anyhow!(
+                "error executing {:#?}, error {}",
+                plugin_file,
+                code
+            ));
+        }
+
+        Ok(())
+    }
 }
 
 impl Default for Site {
@@ -86,8 +154,10 @@ impl Default for Build {
             template_dir: default_template_dir(),
             static_dir: default_static_dir(),
             build_dir: default_build_dir(),
+            plugin_dir: default_plugin_dir(),
             include_drafts: false,
             static_prefix: default_static_prefix(),
+            no_verify: false,
         }
     }
 }
@@ -118,6 +188,9 @@ fn default_template_dir() -> String {
 }
 fn default_build_dir() -> String {
     "build".to_string()
+}
+fn default_plugin_dir() -> String {
+    "plugin".to_string()
 }
 fn default_static_prefix() -> String {
     "static".to_string()

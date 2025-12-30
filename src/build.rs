@@ -11,7 +11,7 @@ use tempfile::{TempDir, tempdir};
 use walkdir::WalkDir;
 
 use crate::{
-    config::Config,
+    config::{Config, HookType},
     markdown::Page,
     template::{TemplateContext, TemplateEnvironment},
 };
@@ -27,10 +27,11 @@ pub struct Builder<'a> {
     config_path: PathBuf,
     tmp_dir: Option<TempDir>,
     built: bool,
+    no_verify: bool,
 }
 
 impl<'a> Builder<'a> {
-    pub fn new(config: &'a Config) -> Self {
+    pub fn new(config: &'a Config, no_verify: bool) -> Self {
         Self {
             template_env: TemplateEnvironment::new(),
             pages: Vec::new(),
@@ -42,13 +43,46 @@ impl<'a> Builder<'a> {
             config_path: PathBuf::new(),
             tmp_dir: None,
             built: false,
+            no_verify: no_verify | config.build.no_verify,
         }
     }
 
+    pub fn run_pre_plugins(&self) -> Result<()> {
+        let tmp_dir = self
+            .tmp_dir
+            .as_ref()
+            .ok_or(anyhow!("temporary build directory not set"))?;
+
+        for p in &self.config.plugins {
+            if p.hook_type == HookType::Pre {
+                p.run(self.config, tmp_dir.path(), self.no_verify)?;
+            }
+        }
+
+        Ok(())
+    }
+
+    pub fn run_post_plugins(&self) -> Result<()> {
+        let tmp_dir = self
+            .tmp_dir
+            .as_ref()
+            .ok_or(anyhow!("temporary build directory not set"))?;
+
+        for p in &self.config.plugins {
+            if p.hook_type == HookType::Post {
+                p.run(self.config, tmp_dir.path(), self.no_verify)?;
+            }
+        }
+
+        Ok(())
+    }
+
     pub fn clean(&self) -> Result<()> {
+        let build_root = PathBuf::from(&self.config.build.build_dir);
+
         // Clean any existing build
-        if self.build_root.is_dir() {
-            remove_dir_all(&self.build_root)?;
+        if build_root.is_dir() {
+            remove_dir_all(build_root)?;
         }
 
         Ok(())
@@ -215,9 +249,13 @@ impl<'a> Builder<'a> {
 
         self.copy_static()?;
 
+        self.run_pre_plugins()?;
+
         self.template_env.load_templates(self.config)?;
         self.load_pages()?;
         self.generate_pages()?;
+
+        self.run_post_plugins()?;
 
         self.copy_generated()?;
 

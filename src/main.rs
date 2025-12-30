@@ -2,9 +2,9 @@ use anyhow::{Result, anyhow};
 use std::{path::Path, process::exit, sync::Arc};
 
 use crate::{
-    args::{DEFAULT_TARS_CONFIG_FILE, InitArgs, TarsSubcommand, parse_args},
+    args::{DEFAULT_TARS_CONFIG_FILE, InitArgs, PluginSubcommand, TarsSubcommand, parse_args},
     build::Builder,
-    config::Config,
+    config::{Config, HookType, Plugin},
     serve::run_server,
 };
 
@@ -78,15 +78,15 @@ async fn main() {
         }
         TarsSubcommand::Build(args) => {
             let config = load_config(&args.config);
-            let mut builder = Builder::new(&config);
+            let mut builder = Builder::new(&config, args.no_verify);
 
             if let Err(e) = builder.build() {
                 println!("{e}");
             }
         }
-        TarsSubcommand::Clean(args) => {
+        TarsSubcommand::Clean(args) => {    
             let config = load_config(&args.config);
-            let builder = Builder::new(&config);
+            let builder = Builder::new(&config, false);
 
             if let Err(e) = builder.clean() {
                 println!("{e}");
@@ -99,5 +99,31 @@ async fn main() {
                 println!("{e}");
             }
         }
+        TarsSubcommand::Plugin(args) => match args.subcommand {
+            PluginSubcommand::List(args) => {
+                let config = load_config(&args.config);
+
+                for p in config.plugins {
+                    println!("Name: {}, Hook: {:#?}", p.name, p.hook_type);
+                }
+            }
+            PluginSubcommand::Hash(args) => {
+                // The actual values don't matter hare, as long as `name` is correct
+                let plugin = Plugin {
+                    name: args.name,
+                    hook_type: HookType::Pre,
+                    hash: "".to_string(),
+                };
+
+                match plugin.get_hash(Path::new(&args.plugin_dir)) {
+                    Ok(hash) => {
+                        println!("{hash}");
+                    }
+                    Err(e) => {
+                        println!("Error while calculating digest: {e}");
+                    }
+                }
+            }
+        },
     }
 }
