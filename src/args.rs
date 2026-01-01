@@ -43,9 +43,14 @@ pub struct PluginArgs {
 pub enum PluginSubcommand {
     List(PluginListArgs),
     Hash(PluginHashArgs),
+    Verify(PluginVerifyArgs),
 }
 
 pub struct PluginListArgs {
+    pub config: String,
+}
+
+pub struct PluginVerifyArgs {
     pub config: String,
 }
 
@@ -89,6 +94,14 @@ impl Default for ServeArgs {
 }
 
 impl Default for PluginListArgs {
+    fn default() -> Self {
+        Self {
+            config: DEFAULT_TARS_CONFIG_FILE.to_string(),
+        }
+    }
+}
+
+impl Default for PluginVerifyArgs {
     fn default() -> Self {
         Self {
             config: DEFAULT_TARS_CONFIG_FILE.to_string(),
@@ -187,6 +200,18 @@ fn build_cli() -> Command {
                         .about("List installed plugins"),
                 )
                 .subcommand(
+                    Command::new("verify")
+                        .arg(
+                            Arg::new("config")
+                                .long("config")
+                                .value_name("CONFIG")
+                                .required(false)
+                                .default_value(DEFAULT_TARS_CONFIG_FILE)
+                                .help("Specify the configuration file to use"),
+                        )
+                        .about("Verify plugin configuration"),
+                )
+                .subcommand(
                     Command::new("hash")
                         .arg(Arg::new("name").required(true).help("Plugin name"))
                         .arg(
@@ -264,6 +289,13 @@ pub fn parse_args() -> Result<Args> {
                         PluginSubcommand::Hash(PluginHashArgs {
                             name: name.clone(),
                             plugin_dir: plugin_dir.clone(),
+                        })
+                    }
+                    Some(("verify", args)) => {
+                        let config = args.get_one::<String>("config").unwrap();
+
+                        PluginSubcommand::Verify(PluginVerifyArgs {
+                            config: config.clone(),
                         })
                     }
                     _ => {
