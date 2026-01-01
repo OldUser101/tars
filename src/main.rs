@@ -72,6 +72,7 @@ async fn main() {
 
             if let Err(e) = init_project(&args, &config) {
                 println!("Error initializing project: {e}");
+                exit(1);
             } else {
                 println!("Initialized project in '{}' .", args.path);
             }
@@ -82,14 +83,16 @@ async fn main() {
 
             if let Err(e) = builder.build() {
                 println!("{e}");
+                exit(1);
             }
         }
-        TarsSubcommand::Clean(args) => {    
+        TarsSubcommand::Clean(args) => {
             let config = load_config(&args.config);
             let builder = Builder::new(&config, false);
 
             if let Err(e) = builder.clean() {
                 println!("{e}");
+                exit(1);
             }
         }
         TarsSubcommand::Serve(args) => {
@@ -97,6 +100,7 @@ async fn main() {
 
             if let Err(e) = run_server(Arc::new(config)).await {
                 println!("{e}");
+                exit(1);
             }
         }
         TarsSubcommand::Plugin(args) => match args.subcommand {
@@ -105,6 +109,18 @@ async fn main() {
 
                 for p in config.plugins {
                     println!("Name: {}, Hook: {:#?}", p.name, p.hook_type);
+                }
+            }
+            PluginSubcommand::Verify(args) => {
+                let config = load_config(&args.config);
+
+                for p in config.plugins {
+                    if let Err(e) = p.resolve(Path::new(&config.build.plugin_dir), false) {
+                        println!("Verification failed for {}: {}", p.name, e);
+                        exit(1);
+                    } else {
+                        println!("Verification success for {}", p.name);
+                    }
                 }
             }
             PluginSubcommand::Hash(args) => {
@@ -121,6 +137,7 @@ async fn main() {
                     }
                     Err(e) => {
                         println!("Error while calculating digest: {e}");
+                        exit(1);
                     }
                 }
             }
