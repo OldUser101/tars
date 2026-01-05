@@ -117,7 +117,7 @@ impl<'a> Builder<'a> {
 
             println!(
                 "Copied static content directory to {}",
-                static_dst.display()
+                self.config.build.static_prefix
             );
         }
 
@@ -163,7 +163,7 @@ impl<'a> Builder<'a> {
                 write(&dst_path, &page.content)?;
             }
 
-            println!("Generated {}", dst_path.display());
+            println!("Generated {}", &page.rel_path.display());
         }
 
         Ok(())
