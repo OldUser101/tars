@@ -28,10 +28,11 @@ pub struct Builder<'a> {
     tmp_dir: Option<TempDir>,
     built: bool,
     no_verify: bool,
+    extra_content: Option<&'a str>,
 }
 
 impl<'a> Builder<'a> {
-    pub fn new(config: &'a Config, no_verify: bool) -> Self {
+    pub fn new(config: &'a Config, no_verify: bool, extra_content: Option<&'a str>) -> Self {
         Self {
             template_env: TemplateEnvironment::new(),
             pages: Vec::new(),
@@ -44,6 +45,7 @@ impl<'a> Builder<'a> {
             tmp_dir: None,
             built: false,
             no_verify: no_verify | config.build.no_verify,
+            extra_content,
         }
     }
 
@@ -156,11 +158,13 @@ impl<'a> Builder<'a> {
             let mut dst_path = self.build_root.join(&page.rel_path);
             dst_path.set_extension("html");
 
+            let extra_str = self.extra_content.unwrap_or("");
+
             if let Some(tmpl_name) = &page.meta.template {
                 let render_str = self.template_env.render_template(&ctx, tmpl_name)?;
-                write(&dst_path, render_str)?;
+                write(&dst_path, format!("{}{}", render_str, extra_str))?;
             } else {
-                write(&dst_path, &page.content)?;
+                write(&dst_path, format!("{}{}", &page.content, extra_str))?;
             }
 
             println!("Generated {}", &page.rel_path.display());
