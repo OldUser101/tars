@@ -79,7 +79,7 @@ async fn main() {
         }
         TarsSubcommand::Build(args) => {
             let config = load_config(&args.config);
-            let mut builder = Builder::new(&config, args.no_verify);
+            let mut builder = Builder::new(&config, args.no_verify, None);
 
             if let Err(e) = builder.build() {
                 println!("{e}");
@@ -88,7 +88,7 @@ async fn main() {
         }
         TarsSubcommand::Clean(args) => {
             let config = load_config(&args.config);
-            let builder = Builder::new(&config, false);
+            let builder = Builder::new(&config, false, None);
 
             if let Err(e) = builder.clean() {
                 println!("{e}");
