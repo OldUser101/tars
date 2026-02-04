@@ -59,6 +59,8 @@ pub struct Serve {
     pub host: String,
     #[serde(default = "default_serve_port")]
     pub port: u16,
+    #[serde(default = "default_serve_reload")]
+    pub auto_reload: bool,
 }
 
 #[derive(PartialEq, Debug, Serialize, Deserialize)]
@@ -183,6 +185,7 @@ impl Default for Serve {
         Self {
             host: default_serve_host(),
             port: default_serve_port(),
+            auto_reload: default_serve_reload(),
         }
     }
 }
@@ -216,6 +219,9 @@ fn default_serve_host() -> String {
 }
 fn default_serve_port() -> u16 {
     8080u16
+}
+fn default_serve_reload() -> bool {
+    false
 }
 
 impl Config {

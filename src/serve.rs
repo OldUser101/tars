@@ -19,6 +19,7 @@ pub async fn run_server(config: Arc<Config>) -> Result<()> {
     let socket_str = format!("{}:{}", config.serve.host, config.serve.port);
     let socket_addr: SocketAddr = socket_str.parse()?;
     let build_dir = config.build.build_dir.clone();
+    let auto_reload = config.serve.auto_reload;
 
     let (refresh_tx, _) = tokio::sync::broadcast::channel::<()>(16);
     let refresh_sse = refresh_tx.clone();
@@ -65,24 +66,29 @@ pub async fn run_server(config: Arc<Config>) -> Result<()> {
 
     println!("Running server on http://{socket_addr}");
 
-    let sse = warp::path("__tars_reload__").and(warp::get()).map(move || {
-        let mut rx = refresh_sse.subscribe();
+    if auto_reload {
+        let sse = warp::path("__tars_reload__").and(warp::get()).map(move || {
+            let mut rx = refresh_sse.subscribe();
 
-        let stream = async_stream::stream! {
-            loop {
-                if rx.recv().await.is_ok() {
-                    yield Ok::<_, Infallible>(
-                        warp::sse::Event::default().data("reload")
-                    );
+            let stream = async_stream::stream! {
+                loop {
+                    if rx.recv().await.is_ok() {
+                        yield Ok::<_, Infallible>(
+                            warp::sse::Event::default().data("reload")
+                        );
+                    }
                 }
-            }
-        };
+            };
 
-        warp::sse::reply(warp::sse::keep_alive().stream(stream))
-    });
+            warp::sse::reply(warp::sse::keep_alive().stream(stream))
+        });
 
-    let routes = warp::fs::dir(build_dir).or(sse);
-    warp::serve(routes).run(socket_addr).await;
+        let routes = warp::fs::dir(build_dir).or(sse);
+        warp::serve(routes).run(socket_addr).await;
+    } else {
+        let routes = warp::fs::dir(build_dir);
+        warp::serve(routes).run(socket_addr).await;
+    };
 
     Ok(())
 }
