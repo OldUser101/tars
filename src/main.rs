@@ -1,5 +1,5 @@
 use anyhow::{Result, anyhow};
-use std::{path::Path, process::exit, sync::Arc};
+use std::{collections::HashMap, path::Path, process::exit, sync::Arc};
 
 use crate::{
     args::{DEFAULT_TARS_CONFIG_FILE, InitArgs, PluginSubcommand, TarsSubcommand, parse_args},
@@ -129,6 +129,7 @@ async fn main() {
                     name: args.name,
                     hook_type: HookType::Pre,
                     hash: "".to_string(),
+                    args: HashMap::new(),
                 };
 
                 match plugin.get_hash(Path::new(&args.plugin_dir)) {

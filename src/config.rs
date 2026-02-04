@@ -74,6 +74,8 @@ pub struct Plugin {
     pub hook_type: HookType,
     pub name: String,
     pub hash: String,
+    #[serde(flatten)]
+    pub args: HashMap<String, toml::Value>,
 }
 
 impl Plugin {
@@ -84,6 +86,16 @@ impl Plugin {
         let digest = try_digest(plugin_path)?;
 
         Ok(digest.to_string())
+    }
+
+    pub fn get_args(&self) -> Vec<String> {
+        let mut args = Vec::new();
+
+        for arg in &self.args {
+            args.push(format!("{}={}", arg.0, arg.1));
+        }
+
+        args
     }
 
     pub fn resolve(&self, plugin_dir: &Path, no_verify: bool) -> Result<PathBuf> {
@@ -114,9 +126,13 @@ impl Plugin {
     }
 
     pub fn run(&self, config: &Config, root_dir: &Path, no_verify: bool) -> Result<()> {
+        println!("Running plugin {}...", &self.name);
+
         let plugin_file = self.resolve(Path::new(&config.build.plugin_dir), no_verify)?;
+        let args = self.get_args();
 
         let status = std::process::Command::new(&plugin_file)
+            .args(args)
             .current_dir(root_dir)
             .status()?;
         let code = status
