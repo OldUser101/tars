@@ -15,7 +15,7 @@ jobs:
     - uses: cachix/install-nix-action@v26
     - uses: cachix/cachix-action@v17
       with:
-        name: olduser101-tars
+        name: olduser101
         authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
     - name: Build tars
       run: nix build
